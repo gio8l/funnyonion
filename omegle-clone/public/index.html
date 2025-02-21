@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FunnyOnion</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="landing">
+        <h1>Welcome to FunnyOnion</h1>
+        <input type="text" id="tags" placeholder="Enter tags (comma-separated)...">
+        <div>
+            <button onclick="startChat('text')">Text Chat</button>
+            <button onclick="startChat('video')">Video Chat</button>
+            <button onclick="toggleAdminAuth()">Admin Login</button>
+        </div>
+    </div>
+
+    <div id="adminAuth" class="hidden">
+        <h2>Admin Panel</h2>
+        <input type="text" id="adminUsername" placeholder="Username">
+        <input type="password" id="adminPassword" placeholder="Password">
+        <button onclick="adminLogin()">Login</button>
+    </div>
+
+    <div id="chat" class="hidden">
+        <h2>Text Chat</h2>
+        <p id="status">Waiting for a stranger...</p>
+        <div id="messages"></div>
+        <input type="text" id="message" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="disconnectChat()">Disconnect</button>
+    </div>
+
+    <div id="video" class="hidden">
+        <h2>Video Chat</h2>
+        <p id="videoStatus">Waiting for a stranger...</p>
+        <div id="videoContainer">
+            <div class="videoBox"><video id="localVideo" autoplay muted></video></div>
+            <div class="videoBox"><video id="remoteVideo" autoplay></video></div>
+        </div>
+        <button onclick="disconnectChat()">Disconnect</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        function startChat(type) {
+            const tags = document.getElementById('tags').value.split(',').map(tag => tag.trim().toLowerCase());
+            socket.emit('findMatch', { type, tags });
+            document.getElementById('landing').classList.add('hidden');
+            document.getElementById(type === 'text' ? 'chat' : 'video').classList.remove('hidden');
+        }
+
+        function toggleAdminAuth() {
+            document.getElementById('adminAuth').classList.toggle('hidden');
+        }
+
+        function adminLogin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            fetch('/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            }).then(res => res.json()).then(data => {
+                if (data.success) alert('Admin login successful');
+                else alert('Admin login failed');
+            });
+        }
+    </script>
+</body>
+</html>
